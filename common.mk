@@ -113,9 +113,14 @@ $(call inherit-product-if-exists, vendor/certprops/Android.mk)
 PRODUCT_PACKAGES += \
     Parts
 
-# Display
+# Config Store
 PRODUCT_PACKAGES += \
     disable_configstore \
+    vendor.qti.hardware.capabilityconfigstore@1.0 \
+    vendor.qti.hardware.capabilityconfigstore@1.0.vendor
+
+# Display
+PRODUCT_PACKAGES += \
     gralloc.qcom \
     hwcomposer.qcom \
     libdisplayconfig.qti \
