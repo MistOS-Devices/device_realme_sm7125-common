@@ -410,7 +410,7 @@ service ppd /vendor/bin/mm-pp-dpps
 on property:init.svc.vendor.hwcomposer-2-1=stopped
     stop ppd
 
-on property:init.svc.hwcomposer-2-1=running
+on property:init.svc.vendor.hwcomposer-2-1=running
     start ppd
 
 on property:init.svc.vendor.hwcomposer-2-1=restarting
