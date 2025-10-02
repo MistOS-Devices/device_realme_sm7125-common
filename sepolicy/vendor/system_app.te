@@ -9,3 +9,6 @@ allow system_app vendor_sysfs_usb_supply:file rw_file_perms;
 allow system_app vendor_sysfs_battery_supply:dir search;
 allow system_app vendor_sysfs_battery_supply:file read;
 allow system_app vendor_sysfs_battery_supply:file getattr;
+
+# Allow Settings app to control input_suspend (bypass charging)
+allow system_app vendor_sysfs_battery_supply:file rw_file_perms;
