@@ -1,82 +1,37 @@
-#!/vendor/bin/sh
+#! /vendor/bin/sh
 
-# ============================================
-# init.qcom.post_boot.sh - Universal All-in-One Edition v4.0
-# Realme 6 Pro (SM7125 - Snapdragon 720G)
-# Optimized for performance, battery, and multitasking
-# ============================================
+# Copyright (c) 2012-2013, 2016-2020, The Linux Foundation. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#	 * Redistributions of source code must retain the above copyright
+#	   notice, this list of conditions and the following disclaimer.
+#	 * Redistributions in binary form must reproduce the above copyright
+#	   notice, this list of conditions and the following disclaimer in the
+#	   documentation and/or other materials provided with the distribution.
+#	 * Neither the name of The Linux Foundation nor
+#	   the names of its contributors may be used to endorse or promote
+#	   products derived from this software without specific prior written
+#	   permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NON-INFRINGEMENT ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Changes from Qualcomm Innovation Center are provided under the following license:
+# Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+#
 
-# -------------------------
-# Intelligent CPU scaling with thermal awareness
-# -------------------------
-dynamic_cpu_scaling() {
-    while true; do
-        CPU_LOAD=$(awk '{u=$2+$4; t=$2+$4+$5; if(t>0) print int(u/t*100); else print 0}' < /proc/stat | head -n1)
-        THERMAL_STATE=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null | head -c 2)
-        THERMAL_STATE=${THERMAL_STATE:-50}
-        
-        # Smart thermal throttling
-        if [ "$THERMAL_STATE" -gt 85 ]; then
-            THERMAL_FACTOR=0.7
-        elif [ "$THERMAL_STATE" -gt 75 ]; then
-            THERMAL_FACTOR=0.8
-        elif [ "$THERMAL_STATE" -gt 65 ]; then
-            THERMAL_FACTOR=0.9
-        else
-            THERMAL_FACTOR=1.0
-        fi
-
-        # LITTLE cores (0-5) - Adaptive scaling
-        for cpu in 0 1 2 3 4 5; do
-            [ ! -d "/sys/devices/system/cpu/cpu$cpu/cpufreq" ] && continue
-            
-            if [ "$CPU_LOAD" -lt 10 ]; then
-                TARGET_FREQ=300000      # Idle
-            elif [ "$CPU_LOAD" -lt 25 ]; then
-                TARGET_FREQ=576000      # Light usage
-            elif [ "$CPU_LOAD" -lt 45 ]; then
-                TARGET_FREQ=768000      # Moderate usage
-            elif [ "$CPU_LOAD" -lt 65 ]; then
-                TARGET_FREQ=1248000     # Heavy usage
-            elif [ "$CPU_LOAD" -lt 85 ]; then
-                TARGET_FREQ=1516800     # Very heavy
-            else
-                TARGET_FREQ=1804800     # Maximum
-            fi
-            
-            TARGET_FREQ=$(echo "$TARGET_FREQ * $THERMAL_FACTOR" | bc 2>/dev/null | cut -d. -f1 || echo $TARGET_FREQ)
-            echo $TARGET_FREQ > /sys/devices/system/cpu/cpu$cpu/cpufreq/scaling_min_freq 2>/dev/null
-        done
-
-        # BIG cores (6-7) - Performance focused with efficiency
-        for cpu in 6 7; do
-            [ ! -d "/sys/devices/system/cpu/cpu$cpu/cpufreq" ] && continue
-            
-            if [ "$CPU_LOAD" -lt 15 ]; then
-                TARGET_FREQ=652800      # Idle/Light
-            elif [ "$CPU_LOAD" -lt 35 ]; then
-                TARGET_FREQ=1036800     # Light-moderate
-            elif [ "$CPU_LOAD" -lt 55 ]; then
-                TARGET_FREQ=1612800     # Moderate
-            elif [ "$CPU_LOAD" -lt 75 ]; then
-                TARGET_FREQ=1804800     # Heavy
-            elif [ "$CPU_LOAD" -lt 90 ]; then
-                TARGET_FREQ=2208000     # Very heavy
-            else
-                TARGET_FREQ=2300000     # Maximum performance
-            fi
-            
-            TARGET_FREQ=$(echo "$TARGET_FREQ * $THERMAL_FACTOR" | bc 2>/dev/null | cut -d. -f1 || echo $TARGET_FREQ)
-            echo $TARGET_FREQ > /sys/devices/system/cpu/cpu$cpu/cpufreq/scaling_min_freq 2>/dev/null
-        done
-
-        sleep 2
-    done &
-}
-
-# Zram Configuration 
-configure_zram() {
-    # Safely disable existing zram
+function configure_zram_parameters() { 
     swapoff /dev/block/zram0 2>/dev/null || true
     
     # Reset zram device
@@ -98,7 +53,7 @@ configure_zram() {
     # VM tuning - Optimized for Realme 6 Pro mobile workloads
     {
         # Swappiness: Slightly higher for 4GB zram to utilize it effectively
-        echo 90 > /proc/sys/vm/swappiness
+        echo 100 > /proc/sys/vm/swappiness
         
         # Cache pressure: Aggressive reclaim for mobile RAM management
         echo 100 > /proc/sys/vm/vfs_cache_pressure
@@ -129,205 +84,138 @@ configure_zram() {
     return 0
 }
 
-# -------------------------
-# Stock-Plus CPU Governor Configuration
-# -------------------------
-configure_cpu_governor() {
-    # Set schedutil governor (stock behavior)
-    for cpu in 0 1 2 3 4 5 6 7; do
-        if [ -d "/sys/devices/system/cpu/cpu$cpu/cpufreq" ]; then
-            echo schedutil > /sys/devices/system/cpu/cpu$cpu/cpufreq/scaling_governor 2>/dev/null
-            
-            # Keep stock schedutil parameters, just ensure they're set
-            if [ -d "/sys/devices/system/cpu/cpu$cpu/cpufreq/schedutil" ]; then
-                echo 500  > /sys/devices/system/cpu/cpu$cpu/cpufreq/schedutil/up_rate_limit_us 2>/dev/null
-                echo 20000 > /sys/devices/system/cpu/cpu$cpu/cpufreq/schedutil/down_rate_limit_us 2>/dev/null
-                echo 1 > /sys/devices/system/cpu/cpu$cpu/cpufreq/schedutil/iowait_boost_enable 2>/dev/null
-            fi
-        fi
-    done
 
-    # Stock-like input boost with slight improvement
-    if [ -d "/sys/module/cpu_boost/parameters" ]; then
-        echo "0:1036800 6:1612800" > /sys/module/cpu_boost/parameters/input_boost_freq 2>/dev/null
-        echo 100 > /sys/module/cpu_boost/parameters/input_boost_ms 2>/dev/null
-        echo 0 > /sys/module/cpu_boost/parameters/sched_boost_on_input 2>/dev/null
-    fi
-}
+# Core control parameters on silver
+echo 0 0 0 0 1 1 > /sys/devices/system/cpu/cpu0/core_ctl/not_preferred
+echo 4 > /sys/devices/system/cpu/cpu0/core_ctl/min_cpus
+echo 60 > /sys/devices/system/cpu/cpu0/core_ctl/busy_up_thres
+echo 40 > /sys/devices/system/cpu/cpu0/core_ctl/busy_down_thres
+echo 100 > /sys/devices/system/cpu/cpu0/core_ctl/offline_delay_ms
+echo 8 > /sys/devices/system/cpu/cpu0/core_ctl/task_thres
+echo 0 > /sys/devices/system/cpu/cpu6/core_ctl/enable
 
-# -------------------------
-# Universal GPU Configuration - Adreno 618
-# -------------------------
-configure_gpu() {
-    GPU_DEVFREQ=""
-    for d in /sys/class/devfreq/*; do
-        if grep -qiE "(kgsl|adreno|gpu)" <<< "$(basename "$d")"; then
-            [ -f "$d/available_governors" ] && GPU_DEVFREQ="$d" && break
-        fi
-    done
+# Setting b.L scheduler parameters
+# default sched up and down migrate values are 95 and 85
+echo 65 > /proc/sys/kernel/sched_downmigrate
+echo 71 > /proc/sys/kernel/sched_upmigrate
+# default sched up and down migrate values are 100 and 95
+echo 85 > /proc/sys/kernel/sched_group_downmigrate
+echo 100 > /proc/sys/kernel/sched_group_upmigrate
+echo 1 > /proc/sys/kernel/sched_walt_rotate_big_tasks
 
-    [ -z "$GPU_DEVFREQ" ] && [ -d /sys/class/kgsl/kgsl-3d0/devfreq ] && GPU_DEVFREQ=/sys/class/kgsl/kgsl-3d0/devfreq
+#colocation v3 settings
+echo 740000 > /proc/sys/kernel/sched_little_cluster_coloc_fmin_khz
 
-    if [ -n "$GPU_DEVFREQ" ]; then
-        GOVS=$(cat "$GPU_DEVFREQ/available_governors" 2>/dev/null || true)
+# configure governor settings for little cluster
+echo "schedutil" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+echo 0 > /sys/devices/system/cpu/cpu0/cpufreq/schedutil/up_rate_limit_us
+echo 0 > /sys/devices/system/cpu/cpu0/cpufreq/schedutil/down_rate_limit_us
+echo 1248000 > /sys/devices/system/cpu/cpu0/cpufreq/schedutil/hispeed_freq
+echo 576000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
 
-        # Prefer msm-adreno-tz for best performance/efficiency balance
-        if echo "$GOVS" | grep -qw "msm-adreno-tz"; then
-            GOV="msm-adreno-tz"
-        elif echo "$GOVS" | grep -qw "simple_ondemand"; then
-            GOV="simple_ondemand"
-        else
-            GOV=$(echo "$GOVS" | awk '{print $1}')
-        fi
+# configure governor settings for big cluster
+echo "schedutil" > /sys/devices/system/cpu/cpu6/cpufreq/scaling_governor
+echo 0 > /sys/devices/system/cpu/cpu6/cpufreq/schedutil/up_rate_limit_us
+echo 0 > /sys/devices/system/cpu/cpu6/cpufreq/schedutil/down_rate_limit_us
+echo 1267200 > /sys/devices/system/cpu/cpu6/cpufreq/schedutil/hispeed_freq
+echo 652800 > /sys/devices/system/cpu/cpu6/cpufreq/scaling_min_freq
 
-        [ -w "$GPU_DEVFREQ/governor" ] && echo "$GOV" > "$GPU_DEVFREQ/governor" 2>/dev/null
+# sched_load_boost as -6 is equivalent to target load as 85. It is per cpu tunable.
+echo -6 >  /sys/devices/system/cpu/cpu6/sched_load_boost
+echo -6 >  /sys/devices/system/cpu/cpu7/sched_load_boost
+echo 85 > /sys/devices/system/cpu/cpu6/cpufreq/schedutil/hispeed_load
 
-        # Adreno 618 optimal frequencies
-        [ -w "$GPU_DEVFREQ/min_freq" ] && echo 180000000 > "$GPU_DEVFREQ/min_freq" 2>/dev/null
-        [ -w "$GPU_DEVFREQ/max_freq" ] && echo 750000000 > "$GPU_DEVFREQ/max_freq" 2>/dev/null
-        [ -w /sys/class/kgsl/kgsl-3d0/adrenoboost ] && echo 1 > /sys/class/kgsl/kgsl-3d0/adrenoboost 2>/dev/null
-    fi
-}
+echo "0:1248000" > /sys/module/cpu_boost/parameters/input_boost_freq
+echo 40 > /sys/module/cpu_boost/parameters/input_boost_ms
 
-# -------------------------
-# Enhanced Multitasking & Memory Management (Stock-Plus)
-# -------------------------
-configure_multitasking() {
-    # LMK - Stock-like with better app retention
-    if [ -f "/sys/module/lowmemorykiller/parameters/minfree" ]; then
-        echo "18432,23040,27648,32256,55296,80640" > /sys/module/lowmemorykiller/parameters/minfree 2>/dev/null
-    fi
-    
-    # Stock-like memory pressure settings
-    echo 100 > /proc/sys/vm/watermark_scale_factor 2>/dev/null
-    echo 0 > /proc/sys/vm/watermark_boost_factor 2>/dev/null
-    
-    # Keep stock OOM behavior
-    echo 0 > /proc/sys/vm/oom_kill_allocating_task 2>/dev/null
-    echo 0 > /proc/sys/vm/panic_on_oom 2>/dev/null
-    
-    # Minimal background process adjustments
-    if [ -d "/dev/cpuctl" ]; then
-        echo 1024 > /dev/cpuctl/background/cpu.shares 2>/dev/null
-        echo -1 > /dev/cpuctl/background/cpu.cfs_quota_us 2>/dev/null
-        echo 1024 > /dev/cpuctl/foreground/cpu.shares 2>/dev/null
-        echo -1 > /dev/cpuctl/foreground/cpu.cfs_quota_us 2>/dev/null
-    fi
-    
-    # Stock-like VM tunables with minor improvements
-    echo 3000 > /proc/sys/vm/dirty_expire_centisecs 2>/dev/null
-    echo 500 > /proc/sys/vm/dirty_writeback_centisecs 2>/dev/null
-    
-    # Keep stock memory behavior mostly intact
-    echo 1 > /proc/sys/vm/compact_unevictable_allowed 2>/dev/null
-}
+# Enable bus-dcvs
+for device in /sys/devices/platform/soc
+do
+	for cpubw in $device/*cpu-cpu-llcc-bw/devfreq/*cpu-cpu-llcc-bw
+	do
+		echo "bw_hwmon" > $cpubw/governor
+		echo "2288 4577 7110 9155 12298 14236" > $cpubw/bw_hwmon/mbps_zones
+		echo 4 > $cpubw/bw_hwmon/sample_ms
+		echo 68 > $cpubw/bw_hwmon/io_percent
+		echo 20 > $cpubw/bw_hwmon/hist_memory
+		echo 0 > $cpubw/bw_hwmon/hyst_length
+		echo 80 > $cpubw/bw_hwmon/down_thres
+		echo 0 > $cpubw/bw_hwmon/guard_band_mbps
+		echo 250 > $cpubw/bw_hwmon/up_scale
+		echo 1600 > $cpubw/bw_hwmon/idle_mbps
+		echo 50 > $cpubw/polling_interval
+	done
 
-# -------------------------
-# Stock-Plus Scheduler with NOOP I/O
-# -------------------------
-configure_scheduler() {
-    # SchedTune - Stock-like with minor improvements
-    if [ -d "/dev/stune" ]; then
-        echo 10 > /dev/stune/top-app/schedtune.boost 2>/dev/null
-        echo 1  > /dev/stune/top-app/schedtune.prefer_idle 2>/dev/null
-        echo 5 > /dev/stune/foreground/schedtune.boost 2>/dev/null
-        echo 0 > /dev/stune/background/schedtune.boost 2>/dev/null
-        echo 0 > /dev/stune/system-background/schedtune.boost 2>/dev/null
-    fi
+	for llccbw in $device/*cpu-llcc-ddr-bw/devfreq/*cpu-llcc-ddr-bw
+	do
+		echo "bw_hwmon" > $llccbw/governor
+		echo "1144 1720 2086 2929 3879 5931 6881 8137" > $llccbw/bw_hwmon/mbps_zones
+		echo 4 > $llccbw/bw_hwmon/sample_ms
+		echo 68 > $llccbw/bw_hwmon/io_percent
+		echo 20 > $llccbw/bw_hwmon/hist_memory
+		echo 0 > $llccbw/bw_hwmon/hyst_length
+		echo 80 > $llccbw/bw_hwmon/down_thres
+		echo 0 > $llccbw/bw_hwmon/guard_band_mbps
+		echo 250 > $llccbw/bw_hwmon/up_scale
+		echo 1600 > $llccbw/bw_hwmon/idle_mbps
+		echo 40 > $llccbw/polling_interval
+	done
 
-    # Stock scheduler sysctls with small improvements
-    echo 95 > /proc/sys/kernel/sched_upmigrate 2>/dev/null
-    echo 85 > /proc/sys/kernel/sched_downmigrate 2>/dev/null
-    echo 120 > /proc/sys/kernel/sched_group_upmigrate 2>/dev/null
-    echo 95 > /proc/sys/kernel/sched_group_downmigrate 2>/dev/null
-    echo 500000 > /proc/sys/kernel/sched_migration_cost_ns 2>/dev/null
-    echo 1000000 > /proc/sys/kernel/sched_wakeup_granularity_ns 2>/dev/null
-    echo 6000000 > /proc/sys/kernel/sched_latency_ns 2>/dev/null
+	for npubw in $device/*npu*-npu-ddr-bw/devfreq/*npu*-npu-ddr-bw
+	do
+		echo 1 > /sys/devices/virtual/npu/msm_npu/pwr
+		echo "bw_hwmon" > $npubw/governor
+		echo "1144 1720 2086 2929 3879 5931 6881 8137" > $npubw/bw_hwmon/mbps_zones
+		echo 4 > $npubw/bw_hwmon/sample_ms
+		echo 80 > $npubw/bw_hwmon/io_percent
+		echo 20 > $npubw/bw_hwmon/hist_memory
+		echo 10 > $npubw/bw_hwmon/hyst_length
+		echo 30 > $npubw/bw_hwmon/down_thres
+		echo 0 > $npubw/bw_hwmon/guard_band_mbps
+		echo 250 > $npubw/bw_hwmon/up_scale
+		echo 0 > $npubw/bw_hwmon/idle_mbps
+		echo 40 > $npubw/polling_interval
+		echo 0 > /sys/devices/virtual/npu/msm_npu/pwr
+	done
 
-    # NOOP I/O for responsiveness (only improvement over stock)
-    for block in sda sdb sdc sdd sde sdf sdg mmcblk0 mmcblk1 dm-0 dm-1; do
-        if [ -e "/sys/block/$block/queue/scheduler" ]; then
-            echo noop > /sys/block/$block/queue/scheduler 2>/dev/null
-            echo 128 > /sys/block/$block/queue/read_ahead_kb 2>/dev/null
-            echo 1 > /sys/block/$block/queue/iostats 2>/dev/null
-            echo 1 > /sys/block/$block/queue/rq_affinity 2>/dev/null
-            echo 128 > /sys/block/$block/queue/nr_requests 2>/dev/null
-        fi
-    done
-}
+	#Enable mem_latency governor for L3, LLCC, and DDR scaling
+	for memlat in $device/*cpu*-lat/devfreq/*cpu*-lat
+	do
+		echo "mem_latency" > $memlat/governor
+		echo 10 > $memlat/polling_interval
+		echo 400 > $memlat/mem_latency/ratio_ceil
+	done
 
-# -------------------------
-# Universal Network Optimization
-# -------------------------
-configure_network() {
-    # High-performance TCP stack
-    echo 1 > /proc/sys/net/ipv4/tcp_low_latency 2>/dev/null
-    echo 0 > /proc/sys/net/ipv4/tcp_timestamps 2>/dev/null
-    echo 1 > /proc/sys/net/ipv4/tcp_sack 2>/dev/null
-    echo 1 > /proc/sys/net/ipv4/tcp_window_scaling 2>/dev/null
-    echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse 2>/dev/null
-    echo 1 > /proc/sys/net/ipv4/tcp_tw_recycle 2>/dev/null
-    
-    # Modern congestion control
-    echo bbr > /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null || \
-    echo cubic > /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null
+	#Enable cdspl3 governor for L3 cdsp nodes
+	for l3cdsp in $device/*cdsp-cdsp-l3-lat/devfreq/*cdsp-cdsp-l3-lat
+	do
+		echo "cdspl3" > $l3cdsp/governor
+	done
 
-    # Optimized buffer sizes for 720G
-    echo 4096 65536 16777216 > /proc/sys/net/ipv4/tcp_rmem 2>/dev/null
-    echo 4096 65536 16777216 > /proc/sys/net/ipv4/tcp_wmem 2>/dev/null
-    echo 262144 > /proc/sys/net/core/rmem_default 2>/dev/null
-    echo 262144 > /proc/sys/net/core/wmem_default 2>/dev/null
-    echo 8388608 > /proc/sys/net/core/rmem_max 2>/dev/null
-    echo 8388608 > /proc/sys/net/core/wmem_max 2>/dev/null
+	#Gold L3 ratio ceil
+	echo 4000 > /sys/class/devfreq/soc:qcom,cpu6-cpu-l3-lat/mem_latency/ratio_ceil
 
-    # Network performance tuning
-    echo 5000 > /proc/sys/net/core/netdev_max_backlog 2>/dev/null
-    echo 1 > /proc/sys/net/ipv4/tcp_no_metrics_save 2>/dev/null
-    echo 0 > /proc/sys/net/ipv4/tcp_slow_start_after_idle 2>/dev/null
-    echo 1 > /proc/sys/net/ipv4/tcp_fastopen 2>/dev/null
+	#Enable compute governor for gold latfloor
+	for latfloor in $device/*cpu*-ddr-latfloor*/devfreq/*cpu-ddr-latfloor*
+	do
+		echo "compute" > $latfloor/governor
+		echo 10 > $latfloor/polling_interval
+	done
 
-    # Wi-Fi optimization - balanced power/performance
-    echo 0 > /sys/module/wlan/parameters/iw_power_save_disable 2>/dev/null
-}
+done
 
-# -------------------------
-# Universal Thermal Management
-# -------------------------
-configure_thermal() {
-    for zone in /sys/class/thermal/thermal_zone*; do
-        if [ -e "$zone/temp" ]; then
-            # Balanced thermal thresholds
-            [ -e "$zone/trip_point_0_temp" ] && echo 85000 > $zone/trip_point_0_temp 2>/dev/null
-            [ -e "$zone/trip_point_1_temp" ] && echo 95000 > $zone/trip_point_1_temp 2>/dev/null
-            [ -e "$zone/trip_point_2_temp" ] && echo 105000 > $zone/trip_point_2_temp 2>/dev/null
-        fi
-    done
-}
+# cpuset parameters
+echo 0-5 > /dev/cpuset/background/cpus
+echo 0-5 > /dev/cpuset/system-background/cpus
 
-# -------------------------
-# Universal System Optimization (Boot tweaks removed)
-# -------------------------
-configure_system() {
-    # File system optimization only
-    echo 256 > /proc/sys/fs/inotify/max_user_instances 2>/dev/null
-    echo 32768 > /proc/sys/fs/inotify/max_user_watches 2>/dev/null
-    
-    # Process scheduling
-    echo 1 > /proc/sys/kernel/sched_autogroup_enabled 2>/dev/null
-    echo 1 > /proc/sys/kernel/timer_migration 2>/dev/null
-}
+# Turn off scheduler boost at the end
+echo 0 > /proc/sys/kernel/sched_boost
 
-# ============================================
-# Main Execution
-# ============================================
+# Turn on sleep modes
+echo 0 > /sys/module/lpm_levels/parameters/sleep_disabled
 
-# Execute all optimizations
-configure_cpu_governor
-configure_gpu
-configure_multitasking
-configure_scheduler
-configure_network
-configure_thermal
-configure_system
-dynamic_cpu_scaling
-configure_zram
+# configure zram
+configure_zram_parameters
+
+# Post-setup services
+setprop vendor.post_boot.parsed 1
