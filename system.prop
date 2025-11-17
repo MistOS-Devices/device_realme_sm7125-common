@@ -137,3 +137,12 @@ debug.cpurend.vsync=false
 #initialize QCA1530 detection
 sys.qca1530=detect
 
+# mist flags
+ro.mist.display=1080 x 2400, 90 hz
+ro.mist.battery=4300mah
+ro.mist.soc=Snapdragon® 720G
+ro.mist.camera=64MP + 12MP + 8MP + 2MP
+ro.mist.front=16MP + 8MP
+ro.mist.platform=SM7125
+ro.mist.screen=6.67' IPS LCD
+ro.mist.device.name=Realme 6 Pro
