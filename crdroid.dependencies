@@ -1,7 +1,0 @@
-[
-  {
-    "repository": "crdroidandroid/android_hardware_dolby",
-    "target_path": "hardware/dolby",
-    "branch": "15.0"
-  }
-]

@@ -1,0 +1,7 @@
+[
+  {
+    "repository": "Evolution-X-Devices/hardware_dolby",
+    "target_path": "hardware/dolby",
+    "branch": "bka"
+  }
+]
