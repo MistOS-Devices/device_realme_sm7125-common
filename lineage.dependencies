@@ -1,8 +1,8 @@
 [
   {
-    "repository": "Evolution-X-Devices/hardware_dolby",
+    "repository": "hardware_dolby",
     "target_path": "hardware/dolby",
-    "branch": "bka",
-    "remote": "github-non-los"
+    "remote": "github",
+    "branch": "16"
   }
 ]
