@@ -64,12 +64,15 @@ function configure_zram_parameters() {
         # Dirty ratios: Conservative for mobile storage longevity
         echo 20 > /proc/sys/vm/dirty_ratio
         echo 5 > /proc/sys/vm/dirty_background_ratio
-        
-        # Extra free memory: Buffer for smooth operation
-        echo 1024 > /proc/sys/vm/extra_free_kbytes
-        
-        # Memory overcommit: Conservative for stability
-        echo 1 > /proc/sys/vm/overcommit_memory
+        echo 20 > /proc/sys/vm/dirty_ratio
+        echo 2000 > /proc/sys/vm/dirty_expire_centisecs
+
+        # Prevent early LMK: proper memory reserve
+        echo 15000 > /proc/sys/vm/extra_free_kbytes
+        echo 38000 > /proc/sys/vm/min_free_kbytes
+
+        # Stable overcommit
+        echo 0 > /proc/sys/vm/overcommit_memory
         echo 50 > /proc/sys/vm/overcommit_ratio
         
         # Additional mobile optimizations for Snapdragon 720G
