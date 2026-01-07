@@ -31,62 +31,148 @@
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 #
 
-function configure_zram_parameters() {
-    swapoff /dev/block/zram0 2>/dev/null || true
+function configure_read_ahead_kb_values() {
+    MemTotalStr=`cat /proc/meminfo | grep MemTotal`
+    MemTotal=${MemTotalStr:16:8}
 
-    # Reset zram device
-    [ -w /sys/block/zram0/reset ] && echo 1 > /sys/block/zram0/reset
+    dmpts=$(ls /sys/block/*/queue/read_ahead_kb | grep -e dm -e mmc)
 
-    # Set compression algorithm (LZ4 is optimal for SM7125)
-    echo lz4 > /sys/block/zram0/comp_algorithm 2>/dev/null || return 1
-
-    # Use 4 compression streams for 2x A76 + 6x A55
-    echo 4 > /sys/block/zram0/max_comp_streams 2>/dev/null || true
-
-    # Allocate 4GB ZRAM
-    echo 4294967296 > /sys/block/zram0/disksize 2>/dev/null || return 1
-
-    # Initialize swap
-    mkswap /dev/block/zram0 2>/dev/null || return 1
-    swapon /dev/block/zram0 -p 32758 2>/dev/null || return 1
-
-    {
-        # swappiness 
-        echo 100 > /proc/sys/vm/swappiness
-
-        # file cache
-        echo 10 > /proc/sys/vm/vfs_cache_pressure
-
-        # read cluster
-        echo 1 > /proc/sys/vm/page-cluster
-
-        # Dirty handling 
-        echo 5 > /proc/sys/vm/dirty_background_ratio
-        echo 20 > /proc/sys/vm/dirty_ratio
-        echo 2000 > /proc/sys/vm/dirty_expire_centisecs
-
-        # Prevent early LMK: proper memory reserve
-        echo 15000 > /proc/sys/vm/extra_free_kbytes
-        echo 38000 > /proc/sys/vm/min_free_kbytes
-
-        # Stable overcommit
-        echo 0 > /proc/sys/vm/overcommit_memory
-        echo 50 > /proc/sys/vm/overcommit_ratio
-
-        # Disable compact (stutter fix)
-        echo 0 > /proc/sys/vm/compact_memory 2>/dev/null || true
-
-        # Avoid killing allocating task (keeps background apps alive)
-        echo 0 > /proc/sys/vm/oom_kill_allocating_task 2>/dev/null || true
-
-        # Improve sequential read performance
-        echo 128 > /sys/block/*/queue/read_ahead_kb 2>/dev/null || true
-
-    } 2>/dev/null
-
-    return 0
+    # Set 128 for <= 3GB &
+    # set 512 for >= 4GB targets.
+    if [ $MemTotal -le 3145728 ]; then
+        echo 128 > /sys/block/mmcblk0/bdi/read_ahead_kb
+        echo 128 > /sys/block/mmcblk0rpmb/bdi/read_ahead_kb
+        for dm in $dmpts; do
+            echo 128 > $dm
+        done
+    else
+        echo 512 > /sys/block/mmcblk0/bdi/read_ahead_kb
+        echo 512 > /sys/block/mmcblk0rpmb/bdi/read_ahead_kb
+        for dm in $dmpts; do
+            echo 512 > $dm
+        done
+    fi
 }
 
+function enable_swap() {
+    # Enable swap if not already enabled
+    if [ ! -f /proc/swaps ] || [ -z "$(cat /proc/swaps | grep zram0)" ]; then
+        return 0
+    fi
+}
+
+function configure_memory_parameters() {
+    # Unified memory configuration for Atoll device (Realme 6 Pro: 6GB/8GB RAM)
+    # Combines ZRAM setup and memory management parameters
+    
+    ProductName=`getprop ro.product.name`
+    arch_type=`uname -m`
+    MemTotalStr=`cat /proc/meminfo | grep MemTotal`
+    MemTotal=${MemTotalStr:16:8}
+    
+    # Configure ZRAM parameters with LZ4 compression
+    echo lz4 > /sys/block/zram0/comp_algorithm
+    echo 100 > /proc/sys/vm/swappiness
+    echo 60 > /proc/sys/vm/direct_swappiness
+    echo 0 > /proc/sys/vm/page-cluster
+    
+    if [ -f /sys/block/zram0/disksize ]; then
+        # Enable deduplication if available
+        if [ -f /sys/block/zram0/use_dedup ]; then
+            echo 1 > /sys/block/zram0/use_dedup
+        fi
+        
+        # Configure ZRAM size based on total RAM
+        if [ $MemTotal -le 4194304 ]; then
+            # 4GB RAM: 2.5GB ZRAM
+            echo 2684354560 > /sys/block/zram0/disksize
+            echo 4 > /sys/module/lowmemorykiller/parameters/almk_totalram_ratio
+        elif [ $MemTotal -le 6291456 ]; then
+            # 6GB RAM: 3GB ZRAM
+            echo 3221225472 > /sys/block/zram0/disksize
+            echo 6 > /sys/module/lowmemorykiller/parameters/almk_totalram_ratio
+        elif [ $MemTotal -le 8388608 ]; then
+            # 8GB RAM: 4GB ZRAM
+            echo 4294967296 > /sys/block/zram0/disksize
+            echo 8 > /sys/module/lowmemorykiller/parameters/almk_totalram_ratio
+        else
+            # 12GB+ RAM: 5GB ZRAM
+            echo 5368709120 > /sys/block/zram0/disksize
+            echo 10 > /sys/module/lowmemorykiller/parameters/almk_totalram_ratio
+        fi
+        
+        # Initialize and enable ZRAM swap
+        mkswap /dev/block/zram0
+        swapon /dev/block/zram0 -p 32758
+    fi
+    
+    # Configure Low Memory Killer parameters
+    # Read adj series and set adj threshold for PPR and ALMK
+    adj_series=`cat /sys/module/lowmemorykiller/parameters/adj`
+    adj_1="${adj_series#*,}"
+    set_almk_ppr_adj="${adj_1%%,*}"
+    
+    # Calculate PPR adj threshold (HOME adj and below should not be affected)
+    set_almk_ppr_adj=$(((set_almk_ppr_adj * 6) + 6))
+    echo $set_almk_ppr_adj > /sys/module/lowmemorykiller/parameters/adj_max_shift
+    
+    # Calculate vmpressure_file_min for 64-bit architecture
+    if [ "$arch_type" == "aarch64" ]; then
+        minfree_series=`cat /sys/module/lowmemorykiller/parameters/minfree`
+        minfree_1="${minfree_series#*,}"
+        rem_minfree_1="${minfree_1%%,*}"
+        minfree_2="${minfree_1#*,}"
+        rem_minfree_2="${minfree_2%%,*}"
+        minfree_3="${minfree_2#*,}"
+        rem_minfree_3="${minfree_3%%,*}"
+        minfree_4="${minfree_3#*,}"
+        rem_minfree_4="${minfree_4%%,*}"
+        minfree_5="${minfree_4#*,}"
+        
+        vmpres_file_min=$((minfree_5 + (minfree_5 - rem_minfree_4)))
+        echo $vmpres_file_min > /sys/module/lowmemorykiller/parameters/vmpressure_file_min
+    fi
+    
+    # Enable Adaptive LMK
+    echo 1 > /sys/module/lowmemorykiller/parameters/enable_adaptive_lmk
+    
+    # Enable OOM reaper
+    if [ -f /sys/module/lowmemorykiller/parameters/oom_reaper ]; then
+        echo 1 > /sys/module/lowmemorykiller/parameters/oom_reaper
+    fi
+    
+    # Configure Process Reclaim parameters
+    if [ -f /sys/devices/soc0/soc_id ]; then
+        soc_id=`cat /sys/devices/soc0/soc_id`
+    else
+        soc_id=`cat /sys/devices/system/soc/soc0/id`
+    fi
+    
+    # Set PPR parameters (excluding premium SoCs)
+    case "$soc_id" in
+        "321" | "341" | "292" | "319" | "246" | "291" | "305" | "312")
+            # Skip PPR for premium targets
+            ;;
+        *)
+            echo $set_almk_ppr_adj > /sys/module/process_reclaim/parameters/min_score_adj
+            echo 1 > /sys/module/process_reclaim/parameters/enable_process_reclaim
+            echo 50 > /sys/module/process_reclaim/parameters/pressure_min
+            echo 70 > /sys/module/process_reclaim/parameters/pressure_max
+            echo 30 > /sys/module/process_reclaim/parameters/swap_opt_eff
+            echo 512 > /sys/module/process_reclaim/parameters/per_swap_size
+            ;;
+    esac
+    
+    # Set global VM parameters
+    echo 0 > /sys/module/vmpressure/parameters/allocstall_threshold
+    echo 1 > /proc/sys/vm/watermark_scale_factor
+    
+    # Configure read-ahead values
+    configure_read_ahead_kb_values
+    
+    # Enable swap
+    enable_swap
+}
 
 # Core control parameters on silver
 echo 0 0 0 0 1 1 > /sys/devices/system/cpu/cpu0/core_ctl/not_preferred
