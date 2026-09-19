@@ -77,11 +77,16 @@ function configure_memory_parameters() {
     # kill is a separate frameworks/base issue (PhoneWindowManager).
     echo zstd > /sys/block/zram0/comp_algorithm
     echo 100 > /proc/sys/vm/swappiness
-    echo 60 > /proc/sys/vm/direct_swappiness
-    echo 0 > /proc/sys/vm/page-cluster
-    
-    if [ -f /sys/block/zram0/disksize ]; then
-        # Enable deduplication if available
+    echo 100 > /proc/sys/vm/direct_swappiness
+
+    # This oneshot can be started in charger mode and again after boot. Never
+    # format an active swap device a second time.
+    if [ -f /sys/block/zram0/disksize ] &&
+       ! grep -q '[/]zram0' /proc/swaps 2>/dev/null; then
+        # The live device uses far less than the available 4 GB swap. Prefer
+        # low-latency compression over zstd's unused extra density.
+        echo lz4 > /sys/block/zram0/comp_algorithm
+
         if [ -f /sys/block/zram0/use_dedup ]; then
             echo 1 > /sys/block/zram0/use_dedup
         fi
@@ -170,10 +175,11 @@ function configure_memory_parameters() {
     # Set global VM parameters
     echo 0 > /sys/module/vmpressure/parameters/allocstall_threshold
     # wsf was forced to 1 (laziest reclaim -> kswapd wakes late -> direct-reclaim
-    # stalls/jank). 30 is the community value for non-MGLRU LRU devices: kswapd
-    # reclaims a bit more proactively without the over-reclaim seen at 100.
-    # NOTE: this is the one knob to watch; revert to 1 if anything feels worse.
-    echo 30 > /proc/sys/vm/watermark_scale_factor
+    # stalls/jank). Keep the upstream default distance so short-lived allocation
+    # bursts do not look like sustained low-memory pressure to userspace lmkd.
+    # 200 keeps ~350MB free on 8GB instead of ~95MB so allocations stop stalling
+    # in direct reclaim; lmkd's watermark math tracks the kernel's own targets.
+    echo 200 > /proc/sys/vm/watermark_scale_factor
     
     # Configure read-ahead values
     configure_read_ahead_kb_values
