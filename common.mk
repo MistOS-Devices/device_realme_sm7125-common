@@ -365,7 +365,8 @@ PRODUCT_PACKAGES += \
     
 # QTI FWK Detect
 PRODUCT_PACKAGES += \
-    libqti_vndfwk_detect.vendor 
+    libqti_vndfwk_detect.vendor \
+    libvndfwk_detect_jni.qti.vendor
 
 # RCS
 PRODUCT_PACKAGES += \

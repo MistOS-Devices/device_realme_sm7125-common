@@ -37,6 +37,7 @@
 Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
 SPDX-License-Identifier: BSD-3-Clause-Clear */
 
+#include <algorithm>
 #include <unordered_map>
 #include <stdexcept>
 #include <android-base/logging.h>
@@ -2906,6 +2907,16 @@ std::vector<std::string> cpu_sensors_cliffs = {
             if (!bcl_defined)
                 thermalConfig.insert(thermalConfig.end(),
                     bcl_conf.begin(), bcl_conf.end());
+        }
+        // Realme SM7125 disables the BCL peripherals in its device tree.
+        // Advertising their unreadable sensors makes temperature queries fail.
+        if (soc_id == 443) {
+            thermalConfig.erase(std::remove_if(thermalConfig.begin(), thermalConfig.end(),
+                [](const target_therm_cfg& sensor) {
+                    return sensor.type == TemperatureType::BCL_CURRENT ||
+                        sensor.type == TemperatureType::BCL_VOLTAGE ||
+                        sensor.type == TemperatureType::BCL_PERCENTAGE;
+                }), thermalConfig.end());
         }
         LOG(DEBUG) << "Total sensors:" << thermalConfig.size();
     }
