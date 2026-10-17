@@ -162,6 +162,9 @@ SYSTEMUI_OPTIMIZE_JAVA := true
 PRODUCT_PACKAGES += \
     fastbootd
 
+# Face unlock
+TARGET_FACE_UNLOCK_SUPPORTED := true
+
 # Fingerprint
 PRODUCT_PACKAGES += \
     android.hardware.biometrics.fingerprint@2.3-service.realme_sm7125
