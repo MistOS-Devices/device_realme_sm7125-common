@@ -137,7 +137,6 @@ ro.surface_flinger.has_HDR_display=true
 ro.surface_flinger.has_wide_color_display=true
 ro.surface_flinger.use_color_management=true
 debug.sf.predict_hwc_composition_strategy=0
-debug.sf.auto_latch_unsignaled=0
 ro.vendor.qti.cgroup_follow.enable=true 
 persist.vendor.qti.inputopts.enable=true 
 persist.vendor.qti.inputopts.movetouchslop=0.6 
@@ -155,7 +154,6 @@ debug.sf.enable_adpf_cpu_hint=true
 
 # Keyguard
 keyguard.no_require_sim=true
-debug.sf.enable_gl_backpressure=0
 
 # Keystore
 ro.hardware.keystore_desede=true
