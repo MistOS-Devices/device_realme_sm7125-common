@@ -147,11 +147,6 @@ vendor.hw.fm.init=0
 # FUSE passthrough
 persist.sys.fuse.passthrough.enable=true
 
-#Graphics
-debug.hwui.use_hint_manager=true
-debug.hwui.target_cpu_time_percent=30
-debug.sf.enable_adpf_cpu_hint=true
-
 # Keyguard
 keyguard.no_require_sim=true
 
