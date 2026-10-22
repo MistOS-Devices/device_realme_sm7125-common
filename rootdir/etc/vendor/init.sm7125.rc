@@ -1,6 +1,9 @@
 import /vendor/etc/init/hw/init.${ro.build.product}.rc
 
 on init
+    # Keep unhinted RT tasks on WALT demand; ADPF supplies explicit floors.
+    write /proc/sys/kernel/sched_util_clamp_min_rt_default 0
+
     # Update Fastchg FW
     chmod 0660 /proc/fastchg_fw_update
     chown system system /proc/fastchg_fw_update

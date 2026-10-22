@@ -233,3 +233,7 @@ debug.sf.frame_rate_multiple_threshold=0
 # Fingerprint
 ro.vendor.fingerprint.type=side
 ro.vendor.fingerprint.supports_gestures=true
+
+# Adaptive Performance Framework (requires the paired uclamp kernel)
+debug.hwui.use_hint_manager=true
+debug.sf.enable_adpf_cpu_hint=true

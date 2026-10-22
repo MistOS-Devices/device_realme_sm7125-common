@@ -1,4 +1,31 @@
 {
+  "AdpfConfig": [
+    {
+      "Name": "DEFAULT",
+      "PID_On": true,
+      "PID_Po": 2.0,
+      "PID_Pu": 1.0,
+      "PID_I": 0.001,
+      "PID_I_Init": 0,
+      "PID_I_High": 128,
+      "PID_I_Low": -128,
+      "PID_Do": 0.0,
+      "PID_Du": 0.0,
+      "UclampMin_On": true,
+      "UclampMin_Init": 128,
+      "UclampMin_LoadUp": 384,
+      "UclampMin_LoadReset": 128,
+      "UclampMin_High": 768,
+      "UclampMin_Low": 0,
+      "SamplingWindow_P": 2,
+      "SamplingWindow_I": 4,
+      "SamplingWindow_D": 1,
+      "ReportingRateLimitNs": 11111111,
+      "TargetTimeFactor": 1.0,
+      "StaleTimeFactor": 3.0,
+      "GpuBoost": false
+    }
+  ],
   "Nodes": [
     {
       "Name": "CPULittleClusterMaxFreq",

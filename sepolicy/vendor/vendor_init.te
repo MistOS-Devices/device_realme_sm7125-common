@@ -27,3 +27,6 @@ allow vendor_init vendor_default_prop:property_service { set };
 
 allow vendor_init rm_vendor_radio_vendor_data_file:dir { getattr ioctl open read };
 
+
+# Set the default RT utilization clamp before hint sessions start.
+allow vendor_init proc_sched:file w_file_perms;
