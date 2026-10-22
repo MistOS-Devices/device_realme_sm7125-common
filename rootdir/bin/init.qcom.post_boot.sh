@@ -77,7 +77,6 @@ function configure_memory_parameters() {
     # kill is a separate frameworks/base issue (PhoneWindowManager).
     echo zstd > /sys/block/zram0/comp_algorithm
     echo 100 > /proc/sys/vm/swappiness
-    echo 100 > /proc/sys/vm/direct_swappiness
 
     # This oneshot can be started in charger mode and again after boot. Never
     # format an active swap device a second time.
