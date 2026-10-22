@@ -53,12 +53,19 @@
 -->
 
 <Included>
-<Include href="media_codecs_dolby_audio.xml" />
+    <Include href="media_codecs_dolby_audio.xml" />
     <Settings>
         <Domain name="telephony" enabled="true" />
         <Setting name="max-video-encoder-input-buffers" value="11" />
     </Settings>
     <Decoders>
+        <!-- hardware/dolby ships AC-4 but leaves its codec declaration disabled. -->
+        <MediaCodec name="c2.dolby.ac4.decoder" type="audio/ac4">
+            <Alias name="OMX.dolby.ac4.decoder" />
+            <Limit name="channel-count" max="16" />
+            <Limit name="sample-rate" ranges="48000" />
+            <Limit name="bitrate" range="16000-2688000" />
+        </MediaCodec>
         <!-- C2 decoders -->
         <MediaCodec name="c2.qti.avc.decoder" type="video/avc">
             <Alias name="OMX.qcom.video.decoder.avc" />

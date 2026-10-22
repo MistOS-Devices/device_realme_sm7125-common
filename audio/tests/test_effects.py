@@ -138,6 +138,27 @@ class AudioEffectsTest(unittest.TestCase):
         for instance in ('default1', 'dolby'):
             self.assertIn(instance, [e.text for e in stores.findall('interface/instance')])
 
+    def test_dolby_codec_config_is_included(self):
+        codecs = ET.parse(DEVICE / 'configs/media/vendor/media_codecs_c2.xml').getroot()
+        self.assertIn('media_codecs_dolby_audio.xml',
+                      [e.get('href') for e in codecs.findall('Include')])
+        dolby = ET.parse(DOLBY / 'configs/media_codecs_dolby_audio.xml').getroot()
+        types = {e.get('name') for e in dolby.findall('Decoders/MediaCodec/Type')}
+        self.assertTrue({'audio/ac3', 'audio/eac3', 'audio/eac3-joc'} <= types)
+
+    def test_ac4_decoder_is_exposed_and_supplied(self):
+        codecs = ET.parse(DEVICE / 'configs/media/vendor/media_codecs_c2.xml').getroot()
+        ac4 = codecs.find("Decoders/MediaCodec[@type='audio/ac4']")
+        self.assertIsNotNone(ac4, 'The supplied AC-4 decoder must be exposed to apps')
+        self.assertEqual(ac4.get('name'), 'c2.dolby.ac4.decoder')
+        blob = (DOLBY / 'proprietary/vendor/lib64/libcodec2_soft_ac4dec.so').read_bytes()
+        self.assertTrue(b'c2.dolby.ac4.decoder\x00' in blob)
+        store = (DOLBY / 'proprietary/vendor/lib64/libcodec2_store_dolby.so').read_bytes()
+        self.assertTrue(b'libcodec2_soft_ac4dec.so\x00' in store)
+        self.assertEqual(ac4.find("Limit[@name='sample-rate']").get('ranges'), '48000')
+        self.assertEqual(ac4.find("Limit[@name='channel-count']").get('max'), '16')
+        self.assertEqual(ac4.find("Limit[@name='bitrate']").get('range'), '16000-2688000')
+
 
 if __name__ == '__main__':
     unittest.main()
