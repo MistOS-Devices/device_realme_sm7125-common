@@ -1,0 +1,2 @@
+# DMS reads the Dolby and Qualcomm vendor audio configuration.
+get_prop(hal_dms_default, vendor_audio_prop)
