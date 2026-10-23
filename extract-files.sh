@@ -60,6 +60,9 @@ fi
 
 function blob_fixup() {
     case "${1}" in
+        vendor/lib/libril-qc-hal-qmi.so | vendor/lib64/libril-qc-hal-qmi.so)
+            python3 "${MY_DIR}/tools/fix-ril-properties.py" "${2}"
+            ;;
         odm/lib/libgf_hal_G3.so | odm/lib64/libgf_hal_G3.so)
             sed -i 's/ro.boot.flash.locked/ro.boot.flash.fucked/g' "${2}"
             ;;

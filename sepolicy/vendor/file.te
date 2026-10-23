@@ -35,3 +35,4 @@ type proc_decimal, fs_type, proc_type;
 
 #oppo nv
 type rm_vendor_radio_vendor_data_file, core_data_file_type, data_file_type, file_type;
+type vendor_oppo_radio_cache_file, file_type;

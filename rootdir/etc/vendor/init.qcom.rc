@@ -267,6 +267,12 @@ on boot
 
 # msm specific files that need to be created on /data
 on post-fs-data
+    # Prepare the stock RIL's existing NV stores before its services start.
+    mkdir /data/opponvitems 0771 radio radio
+    restorecon_recursive /data/opponvitems
+    mkdir /cache/opponvitems 0770 radio radio
+    restorecon_recursive /cache/opponvitems
+
     mkdir /data/vendor/misc 01771 system system
 
     # Create directory used for dump collection

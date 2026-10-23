@@ -1,4 +1,7 @@
 persist.vendor.fingerprint.fp_id    u:object_r:vendor_default_prop:s0
 
+vendor.oppo.eng.no       u:object_r:vendor_oppo_radio_prop:s0 exact string
+vendor.oppo.rffeature    u:object_r:vendor_oppo_radio_prop:s0 exact string
+
 # Bluetooth LEA
 ro.vendor.bluetooth.lea.*  u:object_r:vendor_bluetooth_prop:s0

@@ -1,5 +1,14 @@
 get_prop(rild, oppo_debug_prop);
 
+# The stock RIL retains its NV store outside /data/vendor on this legacy device.
+typeattribute rild data_between_core_and_vendor_violators;
+allow rild rm_vendor_radio_vendor_data_file:dir create_dir_perms;
+allow rild rm_vendor_radio_vendor_data_file:file create_file_perms;
+allow rild vendor_oppo_radio_cache_file:dir create_dir_perms;
+allow rild vendor_oppo_radio_cache_file:file create_file_perms;
+allow rild cache_file:dir search;
+set_prop(rild, vendor_oppo_radio_prop)
+
 r_dir_file(rild, proc_devinfo);
 r_dir_file(rild, proc_oppo_rf);
 r_dir_file(rild, mnt_vendor_file);

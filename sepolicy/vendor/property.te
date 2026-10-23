@@ -3,3 +3,6 @@ type oppo_debug_prop, vendor_property_type;
 type oppo_fingerprint_prop, vendor_property_type;
 type oppo_wlan_prop, vendor_property_type;
 
+# Legacy RIL factory/RF metadata, namespaced during extraction.
+vendor_internal_prop(vendor_oppo_radio_prop)
+

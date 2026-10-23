@@ -26,6 +26,10 @@ allow vendor_init tmpfs:file { getattr open read };
 allow vendor_init vendor_default_prop:property_service { set };
 
 allow vendor_init rm_vendor_radio_vendor_data_file:dir { getattr ioctl open read };
+allow vendor_init rm_vendor_radio_vendor_data_file:dir create_dir_perms;
+allow vendor_init rm_vendor_radio_vendor_data_file:dir relabelto;
+allow vendor_init rm_vendor_radio_vendor_data_file:file { getattr relabelto };
+allow vendor_init vendor_oppo_radio_cache_file:dir create_dir_perms;
 
 
 # Set the default RT utilization clamp before hint sessions start.
