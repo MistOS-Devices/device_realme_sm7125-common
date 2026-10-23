@@ -51,6 +51,9 @@ DEX_PREOPT_DEFAULT := generate-vdex-and-image
 WITH_DEXPREOPT_DEBUG_INFO := false
 
 # Audio
+# The selected Dolby effects are arm64-only.
+$(call soong_config_set_bool,android_hardware_audio,run_64bit,true)
+
 AUDIO_FEATURE_ENABLED_EXTN_FORMATS := true
 AUDIO_FEATURE_ENABLED_HDMI_SPK := true
 AUDIO_FEATURE_ENABLED_PROXY_DEVICE := true
