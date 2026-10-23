@@ -9,12 +9,24 @@ import xml.etree.ElementTree as ET
 
 DEVICE = Path(__file__).resolve().parents[2]
 DOLBY = Path(os.environ.get('DOLBY_PATH', DEVICE.parents[2] / 'hardware/dolby'))
+DEVICE_VENDOR = Path(os.environ.get('DEVICE_VENDOR_PATH',
+                                   DEVICE.parents[2] / 'vendor/realme/RMX2061'))
 NS = {'a': 'http://schemas.android.com/audio/audio_effects_conf/v2_0'}
 
 
 class AudioEffectsTest(unittest.TestCase):
     def setUp(self):
         self.root = ET.parse(DEVICE / 'audio/vendor/audio_effects.xml').getroot()
+
+    def effect_blob(self, filename):
+        source = DEVICE_VENDOR if filename == 'libswdap.so' else DOLBY
+        return source / 'proprietary/vendor/lib64/soundfx' / filename
+
+    def test_dap_supports_legacy_dsp_stack(self):
+        library = self.root.find("a:libraries/a:library[@name='dap']", NS)
+        blob = self.effect_blob(library.get('path')).read_bytes()
+        self.assertFalse(b'libqtigefar.so\x00' in blob,
+                         'This device cannot initialize the AudioReach DAP backend')
 
     def test_effect_graph_is_unambiguous(self):
         for section in ('libraries', 'effects'):
@@ -45,7 +57,7 @@ class AudioEffectsTest(unittest.TestCase):
                 encoded = struct.pack('<IHHH', value.time_low, value.time_mid,
                                       value.time_hi_version,
                                       value.clock_seq_hi_variant << 8 | value.clock_seq_low)
-                blob = DOLBY / 'proprietary/vendor/lib64/soundfx' / libraries[library]
+                blob = self.effect_blob(libraries[library])
                 self.assertTrue(encoded + value.bytes[10:] in blob.read_bytes(),
                                 f'{effect.get("uuid")} is not provided by {blob.name}')
 
@@ -63,7 +75,9 @@ class AudioEffectsTest(unittest.TestCase):
                                   value.clock_seq_hi_variant << 8 | value.clock_seq_low)
             registered.add((libraries[effect.get('library')], encoded + value.bytes[10:]))
         found = 0
-        for blob in (DOLBY / 'proprietary/vendor/lib64/soundfx').glob('*.so'):
+        filenames = {libraries[e.get('library')] for e in self.root.find('a:effects', NS)
+                     if e.get('library') in {'dap', 'dvl', 'gamedap', 'vqe', 'spatializer'}}
+        for blob in (self.effect_blob(name) for name in sorted(filenames)):
             data = blob.read_bytes()
             offset = 0
             while True:
