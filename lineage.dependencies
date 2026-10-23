@@ -1,8 +1,8 @@
 [
   {
-    "repository": "hardware_dolby",
+    "repository": "Evolution-X-Devices/hardware_dolby",
     "target_path": "hardware/dolby",
     "remote": "github",
-    "branch": "16"
+    "branch": "cnb-aospa"
   }
 ]
