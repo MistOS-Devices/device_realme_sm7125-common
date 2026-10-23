@@ -202,4 +202,11 @@
     <string name="glove_mode_title">Glove mode</string>
     <string name="glove_mode_summary">Increase touch sensitivity for gloves or thick screen protectors</string>
 
+    <string name="kprofiles_title">Performance profile</string>
+    <string name="kprofiles_dialog_title">Performance profile — changes touch boost duration</string>
+    <string name="kprofiles_default">Default — current tuning</string>
+    <string name="kprofiles_battery">Battery — shorter touch boosts</string>
+    <string name="kprofiles_balanced">Balanced — standard touch boosts</string>
+    <string name="kprofiles_performance">Performance — longer touch boosts</string>
+    <string name="kprofiles_apply_failed">Could not apply performance profile</string>
 </resources>

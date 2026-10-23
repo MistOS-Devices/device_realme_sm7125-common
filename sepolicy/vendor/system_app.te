@@ -18,3 +18,6 @@ r_dir_file(system_app, vendor_sysfs_kgsl);
 allow system_app vendor_sysfs_kgsl:file rw_file_perms;
 
 
+
+# RealmeParts manual performance profile selector.
+allow system_app vendor_sysfs_kprofiles:file { getattr open read write };

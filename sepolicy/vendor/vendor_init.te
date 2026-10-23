@@ -34,3 +34,6 @@ allow vendor_init vendor_oppo_radio_cache_file:dir create_dir_perms;
 
 # Set the default RT utilization clamp before hint sessions start.
 allow vendor_init proc_sched:file w_file_perms;
+
+# Provision root:system ownership and mode on the KProfiles control.
+allow vendor_init vendor_sysfs_kprofiles:file { getattr setattr };

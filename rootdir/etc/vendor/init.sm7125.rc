@@ -1,6 +1,10 @@
 import /vendor/etc/init/hw/init.${ro.build.product}.rc
 
 on init
+    # Only trusted system apps may select manual kernel profiles.
+    chown root system /sys/kernel/kprofiles/kp_mode
+    chmod 0660 /sys/kernel/kprofiles/kp_mode
+
 
     # Group floors complement ADPF; keep every group maximum unrestricted.
     chown system system /dev/cpuctl/background/cpu.uclamp.max

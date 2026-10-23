@@ -34,6 +34,7 @@ import org.aospextended.device.gestures.TouchGesturesActivity;
 import org.aospextended.device.doze.DozeSettingsActivity;
 import org.aospextended.device.vibration.VibratorStrengthPreference;
 import org.aospextended.device.gpu.GpuBoostSettings;
+import org.aospextended.device.performance.KProfilesSettings;
 import org.aospextended.device.battery.ChargeLimitSettings;
 import org.aospextended.device.battery.ChargeLimitService;
 import org.aospextended.device.touch.TouchModeSettings;
@@ -63,6 +64,7 @@ public class RealmeParts extends PreferenceFragmentCompat implements
     private Preference mGesturesPref;
     private VibratorStrengthPreference mVibratorStrength;
     private ListPreference mGpuBoost;
+    private ListPreference mKProfiles;
     private SwitchPreference mChargeLimitEnable;
     private ListPreference mChargeLimitLevel;
     private SwitchPreference mGameMode;
@@ -108,6 +110,18 @@ public class RealmeParts extends PreferenceFragmentCompat implements
             mGpuBoost.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
             mGpuBoost.setOnPreferenceChangeListener(this);
         } else if (performance != null) {
+            performance.removePreference(mGpuBoost);
+        }
+
+        mKProfiles = (ListPreference) findPreference(KProfilesSettings.KEY);
+        if (KProfilesSettings.isSupported()) {
+            mKProfiles.setValue(KProfilesSettings.getCurrent());
+            mKProfiles.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
+            mKProfiles.setOnPreferenceChangeListener(this);
+        } else if (performance != null) {
+            performance.removePreference(mKProfiles);
+        }
+        if (performance != null && performance.getPreferenceCount() == 0) {
             getPreferenceScreen().removePreference(performance);
         }
 
@@ -159,6 +173,9 @@ public class RealmeParts extends PreferenceFragmentCompat implements
     @Override
     public void onResume() {
         super.onResume();
+        if (mKProfiles != null && KProfilesSettings.isSupported()) {
+            mKProfiles.setValue(KProfilesSettings.getCurrent());
+        }
         // The Quick Settings tiles flip the same preferences behind our back;
         // re-read them so the switches match when the user comes back here.
         if (mGameMode != null && TouchModeSettings.isGameModeSupported()) {
@@ -179,7 +196,14 @@ public class RealmeParts extends PreferenceFragmentCompat implements
         final String key = preference.getKey();
         // ListPreference summaries refresh automatically via SimpleSummaryProvider
         // once the new value is applied, so no manual setSummary is needed here.
-        if (GpuBoostSettings.KEY.equals(key)) {
+        if (KProfilesSettings.KEY.equals(key)) {
+            if (!KProfilesSettings.setValue(getContext(), (String) newValue)) {
+                Toast.makeText(getContext(), R.string.kprofiles_apply_failed,
+                        Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            return true;
+        } else if (GpuBoostSettings.KEY.equals(key)) {
             GpuBoostSettings.setValue((String) newValue);
         } else if (ChargeLimitSettings.KEY_ENABLE.equals(key)) {
             ChargeLimitSettings.onEnableChanged(getContext(), (Boolean) newValue);

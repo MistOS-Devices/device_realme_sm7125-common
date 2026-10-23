@@ -30,6 +30,16 @@
         android:title="@string/performance_title">
 
         <ListPreference
+            android:key="kprofiles_mode"
+            android:icon="@drawable/ic_performance"
+            android:title="@string/kprofiles_title"
+            android:dialogTitle="@string/kprofiles_dialog_title"
+            android:entries="@array/kprofiles_entries"
+            android:entryValues="@array/kprofiles_values"
+            android:persistent="false"
+            android:defaultValue="0" />
+
+        <ListPreference
             android:key="gpu_boost_level"
             android:icon="@drawable/ic_performance"
             android:title="@string/gpu_boost_title"
