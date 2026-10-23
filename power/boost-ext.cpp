@@ -31,6 +31,7 @@
 #define LOG_TAG "QTI PowerHAL"
 
 #include <log/log.h>
+#include <mutex>
 
 #include <aidl/android/hardware/power/BnPower.h>
 
@@ -46,6 +47,8 @@ const int kMinInteractiveDuration = 100;  /* ms */
 const int kMaxInteractiveDuration = 1000; /* ms */
 
 static int process_interaction_hint(void* data) {
+    static std::mutex interaction_mutex;
+    std::lock_guard<std::mutex> lock(interaction_mutex);
     static struct timespec s_previous_boost_timespec;
     static int s_previous_duration = 0;
     static int interaction_handle = -1;
@@ -62,13 +65,15 @@ static int process_interaction_hint(void* data) {
         }
     }
 
-    clock_gettime(CLOCK_MONOTONIC, &cur_boost_timespec);
+    if (clock_gettime(CLOCK_MONOTONIC, &cur_boost_timespec) != 0) {
+        return HINT_NONE;
+    }
 
     elapsed_time = calc_timespan_us(s_previous_boost_timespec, cur_boost_timespec);
-    // don't hint if it's been less than 250ms since last boost
-    // also detect if we're doing anything resembling a fling
-    // support additional boosting in case of flings
-    if (elapsed_time < 250000 && duration <= 750) {
+    const long long remaining_us = s_previous_duration * 1000LL - elapsed_time;
+    // Refresh within one frame of expiry; allow longer gestures to extend the vote.
+    if (CHECK_HANDLE(interaction_handle) && elapsed_time >= 0 &&
+        remaining_us > 20000 && duration <= s_previous_duration) {
         return HINT_HANDLED;
     }
 
