@@ -36,7 +36,7 @@ class AdpfProfileTest(unittest.TestCase):
         self.assertLessEqual(p["ReportingRateLimitNs"], 1_000_000_000 / 90)
         self.assertGreaterEqual(p["StaleTimeFactor"], 1.0)
         self.assertLessEqual(p["StaleTimeFactor"], 3.0)
-        self.assertGreater(p["TargetTimeFactor"], 0)
+        self.assertEqual(p["TargetTimeFactor"], 0.90)
         self.assertLessEqual(p["TargetTimeFactor"], 1.0)
         self.assertIs(p["GpuBoost"], False)
         self.assertNotIn("HeuristicBoost_On", p)

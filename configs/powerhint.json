@@ -21,7 +21,7 @@
       "SamplingWindow_I": 4,
       "SamplingWindow_D": 1,
       "ReportingRateLimitNs": 11111111,
-      "TargetTimeFactor": 1.0,
+      "TargetTimeFactor": 0.90,
       "StaleTimeFactor": 3.0,
       "GpuBoost": false
     }
