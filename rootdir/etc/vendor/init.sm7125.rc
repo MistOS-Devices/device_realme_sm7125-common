@@ -1,6 +1,69 @@
 import /vendor/etc/init/hw/init.${ro.build.product}.rc
 
 on init
+
+    # Group floors complement ADPF; keep every group maximum unrestricted.
+    chown system system /dev/cpuctl/background/cpu.uclamp.max
+    chmod 0664 /dev/cpuctl/background/cpu.uclamp.max
+    write /dev/cpuctl/background/cpu.uclamp.max 100
+    chown system system /dev/cpuctl/background/cpu.uclamp.min
+    chmod 0664 /dev/cpuctl/background/cpu.uclamp.min
+    write /dev/cpuctl/background/cpu.uclamp.min 0
+    chown system system /dev/cpuctl/system/cpu.uclamp.max
+    chmod 0664 /dev/cpuctl/system/cpu.uclamp.max
+    write /dev/cpuctl/system/cpu.uclamp.max 100
+    chown system system /dev/cpuctl/system/cpu.uclamp.min
+    chmod 0664 /dev/cpuctl/system/cpu.uclamp.min
+    write /dev/cpuctl/system/cpu.uclamp.min 0
+    chown system system /dev/cpuctl/system-background/cpu.uclamp.max
+    chmod 0664 /dev/cpuctl/system-background/cpu.uclamp.max
+    write /dev/cpuctl/system-background/cpu.uclamp.max 100
+    chown system system /dev/cpuctl/system-background/cpu.uclamp.min
+    chmod 0664 /dev/cpuctl/system-background/cpu.uclamp.min
+    write /dev/cpuctl/system-background/cpu.uclamp.min 0
+    chown system system /dev/cpuctl/foreground/cpu.uclamp.max
+    chmod 0664 /dev/cpuctl/foreground/cpu.uclamp.max
+    write /dev/cpuctl/foreground/cpu.uclamp.max 100
+    chown system system /dev/cpuctl/foreground/cpu.uclamp.min
+    chmod 0664 /dev/cpuctl/foreground/cpu.uclamp.min
+    write /dev/cpuctl/foreground/cpu.uclamp.min 0
+    chown system system /dev/cpuctl/foreground_window/cpu.uclamp.max
+    chmod 0664 /dev/cpuctl/foreground_window/cpu.uclamp.max
+    write /dev/cpuctl/foreground_window/cpu.uclamp.max 100
+    chown system system /dev/cpuctl/foreground_window/cpu.uclamp.min
+    chmod 0664 /dev/cpuctl/foreground_window/cpu.uclamp.min
+    write /dev/cpuctl/foreground_window/cpu.uclamp.min 6.25
+    chown system system /dev/cpuctl/top-app/cpu.uclamp.max
+    chmod 0664 /dev/cpuctl/top-app/cpu.uclamp.max
+    write /dev/cpuctl/top-app/cpu.uclamp.max 100
+    chown system system /dev/cpuctl/top-app/cpu.uclamp.min
+    chmod 0664 /dev/cpuctl/top-app/cpu.uclamp.min
+    write /dev/cpuctl/top-app/cpu.uclamp.min 12.50
+    chown system system /dev/cpuctl/rt/cpu.uclamp.max
+    chmod 0664 /dev/cpuctl/rt/cpu.uclamp.max
+    write /dev/cpuctl/rt/cpu.uclamp.max 100
+    chown system system /dev/cpuctl/rt/cpu.uclamp.min
+    chmod 0664 /dev/cpuctl/rt/cpu.uclamp.min
+    write /dev/cpuctl/rt/cpu.uclamp.min 0
+    chown system system /dev/cpuctl/camera-daemon/cpu.uclamp.max
+    chmod 0664 /dev/cpuctl/camera-daemon/cpu.uclamp.max
+    write /dev/cpuctl/camera-daemon/cpu.uclamp.max 100
+    chown system system /dev/cpuctl/camera-daemon/cpu.uclamp.min
+    chmod 0664 /dev/cpuctl/camera-daemon/cpu.uclamp.min
+    write /dev/cpuctl/camera-daemon/cpu.uclamp.min 0
+    chown system system /dev/cpuctl/nnapi-hal/cpu.uclamp.max
+    chmod 0664 /dev/cpuctl/nnapi-hal/cpu.uclamp.max
+    write /dev/cpuctl/nnapi-hal/cpu.uclamp.max 100
+    chown system system /dev/cpuctl/nnapi-hal/cpu.uclamp.min
+    chmod 0664 /dev/cpuctl/nnapi-hal/cpu.uclamp.min
+    write /dev/cpuctl/nnapi-hal/cpu.uclamp.min 0
+    chown system system /dev/cpuctl/dex2oat/cpu.uclamp.max
+    chmod 0664 /dev/cpuctl/dex2oat/cpu.uclamp.max
+    write /dev/cpuctl/dex2oat/cpu.uclamp.max 100
+    chown system system /dev/cpuctl/dex2oat/cpu.uclamp.min
+    chmod 0664 /dev/cpuctl/dex2oat/cpu.uclamp.min
+    write /dev/cpuctl/dex2oat/cpu.uclamp.min 0
+
     # Keep unhinted RT tasks on WALT demand; ADPF supplies explicit floors.
     write /proc/sys/kernel/sched_util_clamp_min_rt_default 0
 
