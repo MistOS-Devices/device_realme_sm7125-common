@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<permissions>
+    <privapp-permissions package="com.google.android.as">
+        <permission name="android.permission.PERSONAL_CONTEXT_RECEIVE_INSIGHTS" />
+        <permission name="android.permission.PERSONAL_CONTEXT_HOST_INSIGHT_SURFACE" />
+    </privapp-permissions>
+</permissions>

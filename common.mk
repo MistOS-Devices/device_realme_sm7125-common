@@ -41,6 +41,10 @@ PRODUCT_PACKAGES += \
 # API
 PRODUCT_SHIPPING_API_LEVEL := 29
 
+# Privileged permissions for Android System Intelligence
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/permissions/privapp-permissions-realme-sm7125.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/permissions/privapp-permissions-realme-sm7125.xml
+
 # Audio
 PRODUCT_PACKAGES += \
     libvolumelistener
