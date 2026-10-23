@@ -70,48 +70,43 @@ function configure_memory_parameters() {
     MemTotalStr=`cat /proc/meminfo | grep MemTotal`
     MemTotal=${MemTotalStr:16:8}
     
-    # Configure ZRAM parameters with zstd compression.
-    # zstd gives ~3.1x vs lz4's ~2x ratio -> ~50% more effective RAM, so more
-    # apps stay resident under pressure (trades a little swap-in latency, fine
-    # on SD720G). Helps the genuine memory-pressure path; the screen-on cached-app
-    # kill is a separate frameworks/base issue (PhoneWindowManager).
-    echo zstd > /sys/block/zram0/comp_algorithm
     echo 100 > /proc/sys/vm/swappiness
 
     # This oneshot can be started in charger mode and again after boot. Never
     # format an active swap device a second time.
     if [ -f /sys/block/zram0/disksize ] &&
-       ! grep -q '[/]zram0' /proc/swaps 2>/dev/null; then
-        # The live device uses far less than the available 4 GB swap. Prefer
-        # low-latency compression over zstd's unused extra density.
-        echo lz4 > /sys/block/zram0/comp_algorithm
+       ! grep -q '[/]zram0' /proc/swaps 2>/dev/null &&
+       [ "$(cat /sys/block/zram0/initstate)" = "0" ]; then
+        echo lz4 > /sys/block/zram0/comp_algorithm || return 1
 
-        if [ -f /sys/block/zram0/use_dedup ]; then
-            echo 1 > /sys/block/zram0/use_dedup
+        # Keep normal writes on LZ4; recompression remains explicitly triggered.
+        if [ -w /sys/block/zram0/recomp_algorithm ]; then
+            echo "algo=zstd priority=1" > /sys/block/zram0/recomp_algorithm ||
+                echo "ZRAM: secondary ZSTD unavailable; retaining LZ4" >&2
         fi
         
         # Configure ZRAM size based on total RAM
         if [ $MemTotal -le 4194304 ]; then
             # 4GB RAM: 2.5GB ZRAM
-            echo 2684354560 > /sys/block/zram0/disksize
+            echo 2684354560 > /sys/block/zram0/disksize || return 1
             echo 4 > /sys/module/lowmemorykiller/parameters/almk_totalram_ratio
         elif [ $MemTotal -le 6291456 ]; then
             # 6GB RAM: 3GB ZRAM
-            echo 3221225472 > /sys/block/zram0/disksize
+            echo 3221225472 > /sys/block/zram0/disksize || return 1
             echo 6 > /sys/module/lowmemorykiller/parameters/almk_totalram_ratio
         elif [ $MemTotal -le 8388608 ]; then
             # 8GB RAM: 4GB ZRAM
-            echo 4294967296 > /sys/block/zram0/disksize
+            echo 4294967296 > /sys/block/zram0/disksize || return 1
             echo 8 > /sys/module/lowmemorykiller/parameters/almk_totalram_ratio
         else
             # 12GB+ RAM: 5GB ZRAM
-            echo 5368709120 > /sys/block/zram0/disksize
+            echo 5368709120 > /sys/block/zram0/disksize || return 1
             echo 10 > /sys/module/lowmemorykiller/parameters/almk_totalram_ratio
         fi
         
         # Initialize and enable ZRAM swap
-        mkswap /dev/block/zram0
-        swapon /dev/block/zram0 -p 32758
+        mkswap /dev/block/zram0 || return 1
+        swapon /dev/block/zram0 -p 32758 || return 1
     fi
     
     # Configure Low Memory Killer parameters
