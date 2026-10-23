@@ -359,6 +359,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/powerhint.json:$(TARGET_COPY_OUT_VENDOR)/etc/powerhint.json
 
+# Pixel scheduler QoS is unavailable on 4.14; ADPF manages uclamp separately.
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/task_profiles.json:$(TARGET_COPY_OUT_VENDOR)/etc/task_profiles.json
+
 #performance critical applications
 PRODUCT_DEXPREOPT_SPEED_APPS += \
     Settings \
