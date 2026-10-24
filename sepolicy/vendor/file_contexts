@@ -62,3 +62,6 @@
 
 # Device-owned AIDL thermal HAL
 /vendor/bin/hw/android\.hardware\.thermal-service\.realme_sm7125    u:object_r:hal_thermal_default_exec:s0
+
+# Device-owned legacy KGSL memtrack backend.
+/vendor/bin/hw/android\.hardware\.memtrack-service\.realme_sm7125 u:object_r:hal_memtrack_default_exec:s0

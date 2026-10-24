@@ -1,0 +1,13 @@
+// Legacy KGSL sysfs backend, including global GPU-private memory.
+cc_binary {
+    name: "android.hardware.memtrack-service.realme_sm7125",
+    overrides: ["vendor.qti.hardware.memtrack-service"],
+    relative_install_path: "hw",
+    vendor: true,
+    init_rc: ["android.hardware.memtrack-service.realme_sm7125.rc"],
+    vintf_fragments: ["android.hardware.memtrack-service.realme_sm7125.xml"],
+    srcs: ["service.cpp", "Memtrack.cpp"],
+    shared_libs: ["libbinder_ndk", "android.hardware.memtrack-V1-ndk"],
+    cflags: ["-Wall", "-Wextra", "-Werror"],
+    cpp_std: "c++17",
+}

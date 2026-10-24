@@ -1,0 +1,2 @@
+# Enumerate and read the existing per-process KGSL accounting, never tune the GPU.
+r_dir_file(hal_memtrack_default, vendor_sysfs_kgsl_proc);

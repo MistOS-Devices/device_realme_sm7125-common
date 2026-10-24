@@ -54,3 +54,8 @@ genfscon sysfs /devices/platform/soc/c440000.qcom,spmi/spmi-0/spmi0-00/c440000.q
 genfscon sysfs /devices/platform/soc/c440000.qcom,spmi/spmi-0/spmi0-00/c440000.qcom,spmi:qcom,pm6150@0:qcom,pm6150_rtc/wakeup u:object_r:sysfs_wakeup:s0
 genfscon sysfs /devices/platform/soc/c440000.qcom,spmi/spmi-0/spmi0-00/c440000.qcom,spmi:qcom,pm6150@0:qcom,power-on@800/wakeup u:object_r:sysfs_wakeup:s0
 genfscon sysfs /devices/platform/soc/c440000.qcom,spmi/spmi-0/spmi0-04/c440000.qcom,spmi:qcom,pm6150l@4:qcom,power-on@800/wakeup u:object_r:sysfs_wakeup:s0
+
+# Global KGSL allocation counters for the device memtrack backend.
+genfscon sysfs /devices/virtual/kgsl/kgsl/page_alloc u:object_r:vendor_sysfs_kgsl_proc:s0
+genfscon sysfs /devices/virtual/kgsl/kgsl/coherent u:object_r:vendor_sysfs_kgsl_proc:s0
+genfscon sysfs /devices/virtual/kgsl/kgsl/secure u:object_r:vendor_sysfs_kgsl_proc:s0
