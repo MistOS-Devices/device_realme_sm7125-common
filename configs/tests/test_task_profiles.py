@@ -19,23 +19,19 @@ GROUPS = {
 class TaskProfilesTest(unittest.TestCase):
     def test_profiles_and_attributes(self):
         config = json.loads((ROOT/'configs/task_profiles.json').read_text())
-        attributes = {x['Name']: x for x in config['Attributes']}
-        for bound in ('Min', 'Max'):
-            self.assertEqual(attributes['UClamp'+bound], {
-                'Name': 'UClamp'+bound, 'Controller': 'cpu',
-                'File': 'cpu.uclamp.'+bound.lower()})
+        # CPU profiles are also applied by camera/media UIDs. Only init owns
+        # shared clamp policy; keep the platform's membership-only profiles.
+        self.assertNotIn("Attributes", config)
         profiles = {p['Name']: p['Actions'] for p in config['Profiles']}
-        self.assertEqual(len(profiles),len(config['Profiles']))
-        for name,(group,floor) in GROUPS.items():
-            self.assertEqual(profiles[name], [
-                {'Name':'JoinCgroup','Params':{'Controller':'cpu','Path':group}},
-                {'Name':'SetAttribute','Params':{'Name':'UClampMax','Value':'100'}},
-                {'Name':'SetAttribute','Params':{'Name':'UClampMin','Value':floor}},
-            ])
-        for name in ('SCHED_QOS_NONE','SCHED_QOS_SENSITIVE_STANDARD','SCHED_QOS_SENSITIVE_EXTREME'):
+        self.assertEqual(len(profiles), len(config['Profiles']))
+        self.assertTrue(set(GROUPS).isdisjoint(profiles))
+        for name in ('SCHED_QOS_NONE', 'SCHED_QOS_SENSITIVE_STANDARD',
+                     'SCHED_QOS_SENSITIVE_EXTREME'):
             self.assertEqual(profiles[name], [])
-        self.assertNotIn('AggregateProfiles',config) # Keep platform IO/timer actions.
-        self.assertNotIn('UClampLatencySensitive',attributes)
+        self.assertNotIn('AggregateProfiles', config)
+        for profile in config['Profiles']:
+            self.assertFalse(any(a['Name'] == 'SetAttribute'
+                                 for a in profile['Actions']))
 
     def test_group_node_ownership_and_initialization(self):
         text=(ROOT/'rootdir/etc/vendor/init.sm7125.rc').read_text()
