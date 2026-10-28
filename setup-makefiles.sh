@@ -21,13 +21,6 @@ if [ ! -f "${HELPER}" ]; then
 fi
 source "${HELPER}"
 
-# The device's software DAP uses the libraries from hardware/dolby.
-function vendor_imports() {
-    if [ "$COMMON" -ne 1 ]; then
-        printf '\t\t"hardware/dolby",\n' >> "$1"
-    fi
-}
-
 # Initialize the helper for common
 setup_vendor "${DEVICE_COMMON}" "${VENDOR}" "${ANDROID_ROOT}" true
 

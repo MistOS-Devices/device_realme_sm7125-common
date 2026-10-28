@@ -2,6 +2,7 @@
 """Validate the effects graph and Dolby UUIDs against the supplied blobs."""
 import os
 from pathlib import Path
+import re
 import struct
 import unittest
 import uuid
@@ -19,8 +20,15 @@ class AudioEffectsTest(unittest.TestCase):
         self.root = ET.parse(DEVICE / 'audio/vendor/audio_effects.xml').getroot()
 
     def effect_blob(self, filename):
-        source = DEVICE_VENDOR if filename == 'libswdap.so' else DOLBY
-        return source / 'proprietary/vendor/lib64/soundfx' / filename
+        return DOLBY / 'proprietary/vendor/lib64/soundfx' / filename
+
+    def test_software_dap_has_one_module_owner(self):
+        definition = r'\bname\s*:\s*"libswdap"'
+        dolby = (DOLBY / 'Android.bp').read_text()
+        vendor = (DEVICE_VENDOR / 'Android.bp').read_text()
+        self.assertEqual(len(re.findall(definition, dolby)), 1)
+        self.assertEqual(len(re.findall(definition, vendor)), 0)
+        self.assertFalse((DEVICE_VENDOR / 'proprietary/vendor/lib64/soundfx/libswdap.so').exists())
 
     def test_dap_supports_legacy_dsp_stack(self):
         library = self.root.find("a:libraries/a:library[@name='dap']", NS)
