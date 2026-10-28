@@ -162,9 +162,15 @@ BOARD_DTBOIMG_PARTITION_SIZE := 25165824               # 24MB
 BOARD_RECOVERYIMAGE_PARTITION_SIZE := 100663296        # 96MB
 
 
-# Super Partition Sizes 
+# Super Partition Sizes
+ifeq ($(TARGET_DEVICE),RMX2061)
+# Match the GPT layout; keep 4 MiB outside the logical partition group.
+BOARD_SUPER_PARTITION_SIZE := 8183087104
+BOARD_QTI_DYNAMIC_PARTITIONS_SIZE := 8178892800
+else
 BOARD_SUPER_PARTITION_SIZE := 8476688384
 BOARD_QTI_DYNAMIC_PARTITIONS_SIZE := 8472494080
+endif
 
 # Dynamic Super Partitions
 BOARD_SUPER_PARTITION_GROUPS := qti_dynamic_partitions
@@ -196,6 +202,12 @@ BOARD_FLASH_BLOCK_SIZE := 262144
 AB_OTA_UPDATER := false
 
 -include vendor/lineage/config/BoardConfigReservedSize.mk
+
+# Leave room for the Oplus bundle by reducing unused read-only filesystem padding.
+ifeq ($(TARGET_INCLUDE_OPLUS_CAMERA),true)
+BOARD_ODMIMAGE_PARTITION_RESERVED_SIZE := 134217728
+BOARD_VENDORIMAGE_PARTITION_RESERVED_SIZE := 134217728
+endif
 
 # Platform
 TARGET_BOARD_PLATFORM := atoll
